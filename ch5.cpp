@@ -4,8 +4,8 @@
 // Polymorphism: the proporty of writing once and reusing with differente (poly)
 // types, or forms.
 
-// implementation-inheritance uses base class inheritance feature
-// modern practice emphasizes composition-based polymorphism
+// implementation-inheritance uses base class inheritance feature.
+// modern practice emphasizes composition-based polymorphism.
 
 // -------------------------------------------------------------------------------- 
 
@@ -28,27 +28,28 @@ void inheritance_example(void) {
 
 // virtual methods allow that a derived class's implementation should be used if supplied
 
-class IncontinenceClass {
-public:
-    virtual const char* final_message() const {
-        return "We apologize for the incontinence.";
+struct A {
+    virtual const char* m() const {
+        return "A method";
     }
 };
 
-class InconvenienceClass : IncontinenceClass {
-public:
-    const char* final_message() const override {
-        return "We apologize for the inconvenience.";
+struct B : A {
+    const char* m() const override {
+        return "B method";
     }
 };
 
-void virtual_method_example(void) {
-    IncontinenceClass base;
-    InconvenienceClass derived;
-    InconvenienceClass& ref = derived;
-    printf("IncontinenceClass:      %s\n", base.final_message());
-    printf("InconvenienceClass:     %s\n", derived.final_message());
-    printf("IncontinenceClass&:     %s\n", ref.final_message());
+void virtual_method_example() {
+    A base;
+    B derived;
+    A& ref1 = base;
+    A& ref2 = derived;
+    printf("A:                    %s\n", base.m());
+    printf("B:                    %s\n", derived.m());
+    printf("A&, A-initialized:    %s\n", ref1.m());
+    // if it weren't for the virtual keyword, this would fallback to A's method
+    printf("A&, B-initialized:    %s\n", ref2.m());
 }
 
 // a type that features pure virtual method is called an abstract type
@@ -69,7 +70,7 @@ public:
     }
 };
 
-// classes that only define pure virtual methods are called pure-virtual classes
+// classes that only define pure virtual methods are called pure-virtual classes.
 // interfaces are always pure-virtual classes
 class PureVirtualClass {
     virtual const char* only_method() const = 0;
@@ -99,8 +100,7 @@ void pvc_example(void) {
     printf(c.pure_virtual());
     NullClass* x{ new NonNullClass{} };
     printf("Deleting x as a NonNullClass*.\n");
-    // this leaks memory. can be corrected with creating a virtual destructor in
-    // NullClass
+    // this leaks memory. can be corrected by creating a virtual destructor in NullClass
     delete x;
 }
 
@@ -217,5 +217,5 @@ void bank_example(void) {
 // -------------------------------------------------------------------------------- 
 
 int main(void) {
-    bank_example();
+    virtual_method_example();
 }

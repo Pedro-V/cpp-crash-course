@@ -103,10 +103,6 @@ void life_cycle_tracker(void) {
     printf("C\n");
 }
 
-#define __lft \
-life_cycle_tracker(); \
-printf("D\n");
-
 // -------------------------------------------------------------------------------- 
 
 // exceptions: types that communicate error conditions
@@ -328,7 +324,7 @@ void stack_unwind_exceptions(void) {
 
 // the tecnhique of pairing the allocation and deallocation of memory with the
 // constructor and destructor of an object is also called
-// "resource acquisition is initialization" (RAII)
+// "resource acquisition is initialization" (RAII).
 // exceptions, and their stack-unwinding property, are only safe with RAII
 // objects. otherwise, memory leaks can occur.
 

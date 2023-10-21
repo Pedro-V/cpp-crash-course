@@ -208,7 +208,8 @@ public:
     SimpleString(const SimpleString& other)
       : max_size{ other.max_size },
         buffer{ new char[other.max_size] },
-        length{ other.length } {
+        length{ other.length }
+    {
         std::strncpy(buffer, other.buffer, max_size);
     }
 
@@ -225,10 +226,13 @@ public:
     }
 
     // move constructor
+    // noexcep avoid the compiler falling back to a copy constructor
+    // && is a rvalue reference type
     SimpleString(SimpleString&& other) noexcept 
       : max_size{ other.max_size },
         buffer{ other.buffer },
-        length{ other.length } {
+        length{ other.length }
+    {
         other.length = 0;
         other.buffer = nullptr;
         other.max_size = 0;
@@ -270,10 +274,10 @@ void simple_string_usage(void) {
     SimpleString string{ 115 };
     string.append_line("Starbuck, whaddya hear?");
     string.append_line("Nothin' but the rain.");
-    string.print("1");
+    string.print("A");
     string.append_line("Grab your gun and bring the cat in.");
     string.append_line("Aye-aye sir, coming home.");
-    string.print("2");
+    string.print("B");
     if (!string.append_line("Galactica!")) {
         printf("String was not big enough to append another message.\n");
     }

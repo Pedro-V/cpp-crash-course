@@ -23,7 +23,6 @@ void template_instantiation_example() {
 }
 
 // -------------------------------------------------------------------------------- 
-
 // named conversions
 // used when we can't use implicit conversions nor constructor to get the types we need
 
@@ -40,7 +39,6 @@ void test_const_cast() {
     printf("x = %d\n", x);
 }
 
-// -------------------------------------------------------------------------------- 
 // static_cast: reverse well-defined implicit conversion
 
 short increment_as_short(void *target) {
@@ -55,7 +53,6 @@ void static_cast_example() {
     printf("%d is the mark of the beast\n", mark_of_the_beast);
 }
 
-// -------------------------------------------------------------------------------- 
 // reinterpret_cast: type conversions that aren't well defined
 
 void reinterpret_cast_example() {
@@ -63,7 +60,6 @@ void reinterpret_cast_example() {
     printf("Timer is %lu\n", *timer);
 }
 
-// -------------------------------------------------------------------------------- 
 // implementing a static_cast that checks for narrowing
 
 template <typename To, typename From>
@@ -325,7 +321,7 @@ private:
     float balance;
 };
 
-// 6-7
+// 6-7: Account as an Interface. Give two implementations.
 
 struct IAccount {
     virtual void operator -=(double amount) = 0;

@@ -281,7 +281,117 @@ void user_defined_type_conversion_test() {
 }
 
 // -------------------------------------------------------------------------------- 
-// Constant expressions.
+// Constant expressions: The `constexpr` keyword is used on expressions where
+// all information for evaluation is available at compile time, compelling the
+// compiler to do so.
+
+// All constexpr expressions are const, since they're all fixed at runtime.
+
+struct Color {
+    float H, S, V;
+};
+
+constexpr uint8_t max(uint8_t a, uint8_t b) {
+    return a > b ? a : b;
+}
+
+constexpr uint8_t max(uint8_t a, uint8_t b, uint8_t c) {
+    return max(a, max(b, c));
+}
+
+constexpr uint8_t min(uint8_t a, uint8_t b) {
+    return a < b ? a : b;
+}
+
+constexpr uint8_t min(uint8_t a, uint8_t b, uint8_t c) {
+    return min(a, min(b, c));
+}
+
+constexpr float modulo(float dividend, float divisor) {
+    const auto quotient = dividend / divisor;
+    return divisor * (quotient - static_cast<uint8_t>(quotient));
+}
+
+constexpr Color rgb_to_hsv(uint8_t r, uint8_t g, uint8_t b) {
+    Color c{};
+    const auto c_max = max(r, g, b);
+    c.V = c_max / 255.0f;
+
+    const auto c_min = min(r, g, b);
+    const auto delta = c.V - c_min / 255.0f;
+    c.S = c_max == 0 ? 0 : delta / c.V;
+    
+    if (c_max == c_min) {
+        c.H = 0;
+        return c;
+    }
+    if (c_max == r) {
+        c.H = (g / 255.0f - b / 255.0f) / delta;
+    } else if (c_max == g) {
+        c.H = (b / 255.0f - r / 255.0f) / delta + 2.0f;
+    } else if (c_max == b) {
+        c.H = (r / 255.0f - g / 255.0f) / delta + 4.0f;
+    }
+
+    c.H *= 60.0f;
+    c.H = c.H >= 0.0f ? c.H : c.H + 360.0f;
+    c.H = modulo(c.H, 360.0f);
+    return c;
+}
+
+void print_Color(Color c) {
+    printf("H=%f S=%f V=%f\n", c.H, c.S, c.V);
+}
+
+void constexpr_test() {
+    auto black = rgb_to_hsv(0, 0, 0);
+    auto white = rgb_to_hsv(255, 255, 255);
+    auto red   = rgb_to_hsv(255, 0, 0);
+    auto green = rgb_to_hsv(0, 255, 0);
+    auto blue  = rgb_to_hsv(0, 0, 255);
+    Color colors[]{ black, white, red, green, blue };
+    auto len = sizeof(colors) / sizeof(Color);
+    for (size_t i = 0; i < len; i++) {
+        print_Color(colors[i]);
+    }
+}
+
+// -------------------------------------------------------------------------------- 
+// Volatile Expressions: Marks every access on a marked expression as a visible side
+// effect, avoiding compiler optimizations over this marked expression.
+
+// Withou the volatile keyword, the compiler might eliminate the dead store and
+// redundant loads.
+// With it, we tell the compiler not to optimize away any access made to x.
+int foo(int& x) {
+    x = 10;     // dead store
+    x = 20;
+    auto y = x; // redundant load
+    y = x;      // redundant load
+    return y;   // might as weel return x
+}
+
+// -------------------------------------------------------------------------------- 
+// Exercises.
+
+
+// 7-1
+template <size_t Length>
+struct UnsignedBigInteger {
+    UnsignedBigInteger(uint8_t input_data[Length]) {
+        for (size_t i = 0; i < Length; i++) {
+            bits[i] = input_data[i];
+        }
+    }
+
+    UnsignedBigInteger operator +(const UnsignedBigInteger& other) {
+        uint8_t carry;
+        for (size_t i = 0; i < Length; i++) {
+        }
+    }
+private:
+    uint8_t bits[Length];
+};
 
 int main() {
 }

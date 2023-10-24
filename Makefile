@@ -1,5 +1,5 @@
 CXX := g++
-CXX_FLAGS := -g
+CXX_FLAGS := -O3
 
 CHAPTERS := $(wildcard ch*.cpp)
 EXTRA_PARTS := dedication.cpp
@@ -16,5 +16,4 @@ comparison: comparison.c
 	gcc -g $^ -o $@
 
 clean:
-	rm -f $(BINARIES) comparison
-
+	rm -f $(BINARIES) comparison *.s *.o *.out

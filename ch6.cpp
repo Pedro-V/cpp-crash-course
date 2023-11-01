@@ -199,6 +199,7 @@ void mean_with_concepts_test() {
 
 template <size_t Index, typename T, size_t Length>
 T& get(T (&arr)[Length]) {
+    // Evaluate assertion at compile time.
     static_assert(Index < Length, "Out-of-bounds access");
     return arr[Index];
 }

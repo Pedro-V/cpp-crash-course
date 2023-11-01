@@ -55,9 +55,17 @@ struct Bucket {
     std::byte data[data_size];
 };
 
+struct LargeBucket {
+    const static size_t data_size{ 1048576 };   // 1 MB
+    std::byte data[data_size];
+};
+
 struct Heap {
     void *allocate(size_t bytes) {
-        if (bytes > Bucket::data_size) throw std::bad_alloc{};
+        if (bytes > LargeBucket::data_size) throw std::bad_alloc{};
+        if (bytes > Bucket::data_size) {
+            return big_bucket.data;
+        }
         for (size_t i = 0; i < n_heap_buckets; i++) {
             if (!bucket_used[i]) {
                 bucket_used[i] = true;
@@ -78,6 +86,7 @@ struct Heap {
     
     static const size_t n_heap_buckets{ 10 };
     Bucket buckets[n_heap_buckets]{};
+    LargeBucket big_bucket{};
     bool bucket_used[n_heap_buckets]{};
 };
 
@@ -357,8 +366,8 @@ void constexpr_test() {
 }
 
 // -------------------------------------------------------------------------------- 
-// Volatile Expressions: Marks every access on a marked expression as a visible side
-// effect, avoiding compiler optimizations over this marked expression.
+// Volatile Expressions: Every access on the volatile expression is treated as a
+// visible side effect, avoiding compiler optimizations over it.
 
 // Withou the volatile keyword, the compiler might eliminate the dead store and
 // redundant loads.
@@ -384,14 +393,59 @@ struct UnsignedBigInteger {
         }
     }
 
-    UnsignedBigInteger operator +(const UnsignedBigInteger& other) {
-        uint8_t carry;
-        for (size_t i = 0; i < Length; i++) {
+    UnsignedBigInteger operator+(const UnsignedBigInteger& other) {
+        // Assumes other has the same bit length as current instance.
+        uint8_t carry = 0;
+        uint8_t sum;
+        UnsignedBigInteger<Length> result;
+
+        for (size_t i = Length - 1; i > -1; i++) {
+            sum = carry + this[i] + other[i];
+            carry = sum / 2;
+            result[i] = sum % 2;
+        }
+
+        if (carry != 0) {
+            throw std::runtime_error{ "Overflow!" };
+        }
+
+        return result;
+    }
+
+    UnsignedBigInteger operator-(const UnsignedBigInteger& other) {
+        uint8_t borrow = 0;
+        int sub;
+        UnsignedBigInteger<Length> result;
+
+        for (size_t i = Length - 1; i > -1; i++) {
+            sub = this[i] - other[i] - borrow;
+            if (sub < 0) {
+                sub += 2;
+            }
+            result[i] = sub;
+            borrow = (this[i] < other[i] + borrow) ? 1 : 0;
+        }
+        if (borrow == 1) {
+            throw std::runtime_error{ "Underflow!" };
+        }
+
+        return result;
+    }
+
+    uint8_t operator[](size_t i) {
+        if (i >= Length) {
+            throw std::runtime_error{ "index greater than size" };
+        }
+        else {
+            return bits[i];
         }
     }
 private:
     uint8_t bits[Length];
 };
+
+// 7-2
+// Defined just below Bucket
 
 int main() {
 }

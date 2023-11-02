@@ -271,6 +271,8 @@ void fold_example() {
 }
 
 // 9-2
+// Obs: For a real histogram, one should sort the its X axis. Here we don't do
+// that for simplicity.
 struct LengthElement {
     uint32_t length;
     uint32_t term_count;
@@ -278,7 +280,7 @@ struct LengthElement {
 
 struct LengthHistogram {
     LengthHistogram(uint32_t num_terms) : num_terms{ num_terms } {
-        len_elems = new uint32_t[num_terms]{};
+        len_elems = new LengthElement[num_terms]{};
     }
 
     ~LengthHistogram() {
@@ -286,33 +288,68 @@ struct LengthHistogram {
     }
 
     void ingest(const char* term) {
-        auto term_length = length(term);
+        auto term_length = calculate_length(term);
         insert(term_length);
     }
 
     void insert(size_t term_length) {
+        auto foundMatch = [=](auto i) {
+            return len_elems[i].length == 0 ||
+                   len_elems[i].length == term_length;
+        };
         size_t i = 0;
-        while ( i < num_terms && len_elems[i].length != term_length) {
-            i++;
-        }
-
+        while (i < num_terms && !foundMatch(i)) i++;
         len_elems[i].term_count++;
+        len_elems[i].length = term_length;
     }
 
-    size_t length(const char* term) {
+    size_t calculate_length(const char* term) {
         size_t i = 0;
         while (term[i]) i++;
         return i;
     }
 
-    size_t 
+    void print() {
+        size_t i = 0;
+        while (i < num_terms && len_elems[i].length != 0) {
+            printf("%d: ", len_elems[i].length);
+            auto n_asterisks = len_elems[i].term_count;
+            while (n_asterisks--) {
+                printf("*");
+            }
+            printf("\n");
+            i++;
+        }
+    }
 
 private:
-    LengthElement *len_elem;
+    LengthElement *len_elems;
     const uint32_t num_terms;
 };
 
+int main(int argc, char **argv) {
+    LengthHistogram hist{ argc - 1 };
+    for (size_t i{ 1 }; i < argc; i++) {
+        hist.ingest(argv[i]);
+    }
+    hist.print();
+}
 
-int main() {
-    fold_example();
+// 9-3
+
+template <typename Fn, typename In>
+constexpr bool all (Fn f, In* input, size_t length) {
+    auto g = [f](auto x, auto y){ return f(x) && y; };
+    // This is not the most efficient algorithm. The correct would be to
+    // stop evaluation after the first failed test. This is particularly useful
+    // with lazy data structures, such as infinite lists. But this approach
+    // emphasizes composition, so I'm using it.
+    return fold(g, input, length, true);
+}
+
+void all_example() {
+    int data[]{ 100, 200, 300, 400, 500 };
+    size_t data_len = 5;
+    auto all_gt0 = all([](auto x){ return x > 100; }, data, data_len);
+    if (all_gt0) printf("All elements are greater than 100.");
 }

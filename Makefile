@@ -1,5 +1,5 @@
 CXX := g++
-CXX_FLAGS := -O3
+CXX_FLAGS := -g
 
 CHAPTERS := $(wildcard ch*.cpp)
 EXTRA_PARTS := dedication.cpp

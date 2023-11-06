@@ -70,12 +70,12 @@ public:
     }
 };
 
-// classes that only define pure virtual methods are called pure-virtual classes.
+// Classes that only define pure virtual methods are called pure-virtual classes.
 // interfaces are always pure-virtual classes
 class PureVirtualClass {
     virtual const char* only_method() const = 0;
-    // we didn't define a virtual destructor to this interface, therefore we
-    // risk leaking resources
+    // We didn't define a virtual destructor to this interface, therefore we
+    // risk leaking resources.
 };
 
 class NullClass {

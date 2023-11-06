@@ -2,12 +2,23 @@
 #include <functional>
 #include <cstdio>
 
-#define TEST_FRAMEWORK 1
+/*
+ * Since all frameworks write the main function themselves, we use macros to
+ * control which examples are run. The frameworks are 0-indexed, following the
+ * order [Catch2, GTest, Boost]. The index chosen is controlled by the macro
+ * TEST_FRAMEWORK. If defined, its value defines the test framework used.
+ * Otherwise, the examples without framework are used.
+ *
+ * The exercies were made with TEST_FRAMEWORK = 0.
+ */
+
+
+#define TEST_FRAMEWORK 0
 
 // -------------------------------------------------------------------------------- 
 /*
  * Testing:
- * Tests provide a better way for checking (not proving) the correctness of
+ * Tests provide a better way for checking (not proving) the incorrectness of
  * software. The classical way of writing, compiling, running and debugging is
  * neither efficient or modular. 
  *
@@ -46,19 +57,25 @@ struct CarDetected {
     double velocity_mps;
 };
 
+// Exercise 10-1
+struct SpeedLimitDetected {
+    unsigned short speed_mps;
+};
+
 struct BrakeCommand {
     double time_to_collision_s;
 };
 
-
 using SpeedUpdateCallback = std::function<void(const SpeedUpdate&)>;
 using CarDetectedCallback = std::function<void(const CarDetected&)>;
+using SpeedLimitCallback = std::function<void(const SpeedLimitDetected&)>;
 
 struct IServiceBus {
     virtual ~IServiceBus() = default;
     virtual void publish(const BrakeCommand&) = 0;
     virtual void subscribe(SpeedUpdateCallback) = 0;
     virtual void subscribe(CarDetectedCallback) = 0;
+    virtual void subscribe(SpeedLimitCallback) = 0;
 };
 
 // Mocks: An implementation generated for the purposes of testing.
@@ -77,18 +94,31 @@ struct MockServiceBus : IServiceBus {
         car_detected_callback = callback;
     }
 
+    void subscribe(SpeedLimitCallback callback) override {
+        speed_limit_callback = callback;
+    }
+
     BrakeCommand last_command{};
     int commands_published{};
     SpeedUpdateCallback speed_update_callback{};
     CarDetectedCallback car_detected_callback{};
+    SpeedLimitCallback speed_limit_callback{};
 };
 
 struct AutoBrake {
     AutoBrake(IServiceBus& bus)
         : collision_threshold_s{ 5 },
-        speed_mps{} {
-        bus.subscribe([this](const SpeedUpdate& update) {
+          // Exercise 10-4
+          last_known_speed_limit{ 39 },
+          speed_mps{} {
+        bus.subscribe([this, &bus](const SpeedUpdate& update) {
+            // Exercise 10-8
+            if (update.velocity_mps > last_known_speed_limit) {
+                double time_to_collision_s = 0;
+                bus.publish(BrakeCommand{ time_to_collision_s });
+            } else {
                 speed_mps = update.velocity_mps;
+            }
         });
 
         bus.subscribe([this, &bus](const CarDetected& cd) {
@@ -98,6 +128,16 @@ struct AutoBrake {
                     time_to_collision_s <= collision_threshold_s) {
                     bus.publish(BrakeCommand{ time_to_collision_s });
                 }
+        });
+
+        // Exercise 10-6
+        bus.subscribe([this, &bus](const SpeedLimitDetected& limit) {
+            last_known_speed_limit = limit.speed_mps;
+            //Exercise 10-10
+            if (speed_mps > last_known_speed_limit) {
+                double time_to_collision_s = 0;
+                bus.publish(BrakeCommand{ time_to_collision_s });
+            }
         });
     }
 
@@ -113,9 +153,16 @@ struct AutoBrake {
     double get_speed_mps() const {
         return speed_mps;
     }
+
+    // Exercise 10-2
+    unsigned short get_last_known_speed_limit() const {
+        return last_known_speed_limit;
+    }
+
 private:
     double collision_threshold_s;
     double speed_mps;
+    unsigned short last_known_speed_limit;
 };
 
 #ifndef TEST_FRAMEWORK
@@ -199,12 +246,6 @@ void run_tests() {
 // -------------------------------------------------------------------------------- 
 // Unit-testing frameworks
 
-// Since all frameworks write the main function themselves, we use macros to
-// control which examples are run. The frameworks are 0-indexed, following the
-// order [Catch2, GTest, Boost]. The index chosen is controlled by the macro
-// TEST_FRAMEWORK
-
-
 #else
 #  if TEST_FRAMEWORK == 0
 
@@ -247,6 +288,11 @@ TEST_CASE("AutoBrake") {
         REQUIRE(auto_brake.get_speed_mps() == Approx(0));
     }
 
+    // Exercise 10-3
+    SECTION("initializes last known speed to zero") {
+        REQUIRE(auto_brake.get_last_known_speed_limit() == 39);
+    }
+
     SECTION("initializes sensitivity to five") {
         REQUIRE(auto_brake.get_collision_threshold_s() == Approx(5));
     }
@@ -256,6 +302,8 @@ TEST_CASE("AutoBrake") {
     }
 
     SECTION("saves speed after update") {
+        bus.speed_limit_callback(SpeedLimitDetected{ 100L });
+
         bus.speed_update_callback(SpeedUpdate{ 100L });
         REQUIRE(auto_brake.get_speed_mps() == Approx(100L));
 
@@ -266,7 +314,44 @@ TEST_CASE("AutoBrake") {
         REQUIRE(auto_brake.get_speed_mps() == Approx(0L));
     }
 
+    // Exercise 10-5
+    SECTION("saves last known speed") {
+        bus.speed_limit_callback(SpeedLimitDetected{ 20 });
+        REQUIRE(auto_brake.get_last_known_speed_limit() == 20);
+        
+        bus.speed_limit_callback(SpeedLimitDetected{ 100 });
+        REQUIRE(auto_brake.get_last_known_speed_limit() == 100);
+        
+        bus.speed_limit_callback(SpeedLimitDetected{ 820 });
+        REQUIRE(auto_brake.get_last_known_speed_limit() == 820);
+    }
+
+    // Exercise 10-7
+    SECTION("no brake when under speed limit") {
+        bus.speed_limit_callback(SpeedLimitDetected{ 35 });
+        bus.speed_update_callback(SpeedUpdate{ 34L });
+
+        REQUIRE(bus.commands_published == 0);
+    }
+
+    // Exercise 10-9
+    SECTION("one brake issued when over speed limit") {
+        bus.speed_limit_callback(SpeedLimitDetected{ 35 });
+        bus.speed_update_callback(SpeedUpdate{ 40L });
+        REQUIRE(bus.commands_published == 1);
+        REQUIRE(bus.last_command.time_to_collision_s == Approx(0));
+    }
+
+    // Exercise 10-11
+    SECTION("brake issued when smaller speed limit is encountered") {
+        bus.speed_limit_callback(SpeedLimitDetected{ 35 });
+        bus.speed_update_callback(SpeedUpdate{ 30L });
+        bus.speed_limit_callback(SpeedLimitDetected{ 25 });
+    }
+
     SECTION("alerts when collision is imminent") {
+        bus.speed_limit_callback(SpeedLimitDetected{ 100 });
+
         auto_brake.set_collision_threshold_s(10L);
         bus.speed_update_callback(SpeedUpdate{ 100L });
         bus.car_detected_callback(CarDetected{ 100L, 0L });
@@ -276,6 +361,8 @@ TEST_CASE("AutoBrake") {
     }
 
     SECTION("doesn't alerts when collision isn't imminent") {
+        bus.speed_limit_callback(SpeedLimitDetected{ 100 });
+
         auto_brake.set_collision_threshold_s(2L);
         bus.speed_update_callback(SpeedUpdate{ 100L });
         bus.car_detected_callback(CarDetected{ 1000L, 50L });
@@ -283,6 +370,11 @@ TEST_CASE("AutoBrake") {
         REQUIRE(bus.commands_published == 0);
     }
 }
+
+// Exercises: The exercises for unit tests were implemented in the test case
+// with the others. The exercises for new types where implemented close to the
+// other classes.
+
 
 #  elif TEST_FRAMEWORK == 1
 // Google Test. Must be compiled with -lgtest{,_main} flags. Assertions aren't
@@ -419,6 +511,6 @@ BOOST_FIXTURE_TEST_CASE(AlertWhenImminent, AutoBrakeTest) {
 int main(void) {
     printf("No tests here!\n");
 }
+
 #  endif
 #endif
-

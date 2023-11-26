@@ -1,6 +1,17 @@
+// ---------------------------------------------------------------------------------
+// Up and running
+
+// The majority of content in this chapter is for beginner. I jump straight to
+// the exercises.
+
+// ---------------------------------------------------------------------------------
+// Includes
+
 #include <cstdio>
 
-// exercises
+// ---------------------------------------------------------------------------------
+// Exercises.
+
 // 1-1
 int absolute_value(int x) {
     return x < 0 ? -x : x;

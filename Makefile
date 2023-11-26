@@ -1,19 +1,13 @@
 CXX := g++
 CXX_FLAGS := -g
 
-CHAPTERS := $(wildcard ch*.cpp)
-EXTRA_PARTS := dedication.cpp
-
-SOURCES := $(CHAPTERS) $(EXTRA_PARTS)
+SOURCES := $(wildcard *.cpp)
 BINARIES := $(SOURCES:.cpp=)
 
-all: $(BINARIES) comparison
+all: $(BINARIES)
 
 %: %.cpp
 	$(CXX) $(CXX_FLAGS) -o $@ $<
-
-comparison: comparison.c
-	gcc -g $^ -o $@
 
 clean:
 	rm -f $(BINARIES) comparison *.s *.o *.out

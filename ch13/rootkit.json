@@ -1,0 +1,9 @@
+{
+    "name": "finfisher",
+    "year": "2014",
+    "features": {
+        "process": "LSASS",
+        "driver": "mssoundx.sys",
+        "arch": "32"
+    }
+}

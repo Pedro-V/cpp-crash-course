@@ -1005,5 +1005,138 @@ TEST_CASE("Exercise 13-2") {
 }
 
 // Exercise 13-3
+// Implemented in ex13_3.cpp
 
-// Included in ex13_3.cpp
+// Exercise 13-4
+// Duplicate of 13-1.
+
+// Exercise 13-5
+
+#include <chrono>
+#include <cstdio>
+#include <random>
+
+long fib_sum(size_t n) {
+  std::vector<long> fib(n);
+
+  auto [f1, f2] = std::make_pair<long, long>(1, 1);
+  fib.push_back(f1);
+  fib.push_back(f2);
+  for (size_t i{}; i < n - 2; i++) {
+    auto temp = f2;
+    f2 = f1 + f2;
+    f1 = temp;
+    fib.push_back(f2);
+  }
+
+  long sum = 0;
+  for (const auto& f : fib) {
+    sum += f;
+  }
+
+  return sum;
+}
+
+long random() {
+  static std::mt19937_64 mt_engine{ 102787 };
+  static std::uniform_int_distribution<long> int_d{ 1000, 2000 };
+  return int_d(mt_engine);
+}
+
+struct Stopwatch {
+  Stopwatch(std::chrono::nanoseconds& result)
+    : result{ result },
+    start{ std::chrono::system_clock::now() } {} 
+
+  ~Stopwatch() {
+    result = std::chrono::system_clock::now() - start;
+  }
+private:
+  std::chrono::nanoseconds& result;
+  const std::chrono::time_point<std::chrono::system_clock> start;
+};
+
+long cached_fib_sum(const size_t& n) {
+  static std::map<long, long> cache;
+  if (cache.find(n) == cache.end()) {
+    cache[n] = fib_sum(n);
+  }
+  return cache[n];
+}
+
+TEST_CASE("Exercise 13-5") {
+  printf("Exercise 13-5\n");
+
+  size_t samples{ 1'000'000 };
+  std::chrono::nanoseconds elapsed;
+  {
+    Stopwatch stopwatch{ elapsed };
+    volatile double answer;
+    while (samples--) {
+      //answer = fib_sum(random());
+      answer = cached_fib_sum(random());
+    }
+  }
+  // Something in the original code is wrong, because this doesn't work. It
+  // always print something like 6.95e-310 s.
+  printf("Elapsed: %g s.\n", elapsed.count() / 1'000'000'000);
+}
+
+// Exercise 13-7
+
+#include <initializer_list>
+#include <cmath>
+
+template<typename T>
+struct Matrix {
+  Matrix(size_t rows, std::initializer_list<T> val)
+    : rows{ rows },
+      cols{ static_cast<size_t>(std::round(val.size() / rows)) },
+      data( rows, std::vector<T>{}) {
+    auto itr = val.begin();
+    for (size_t row{}; row < rows; row++) {
+      data[row].assign(itr, itr+cols);
+      itr += cols;
+    }
+  }
+
+  T& at(size_t row, size_t col) {
+    if (row >= rows || col >= cols) {
+      throw std::out_of_range{ "Index invalid." };
+    }
+    return data[row][col];
+  }
+
+  const size_t rows, cols;
+private:
+  std::vector<std::vector<T>> data;
+};
+
+TEST_CASE("Matrix") {
+  SECTION("square") {
+    Matrix<int> mat(4, {
+       1,  2,  3,  4,
+       5,  0,  7,  8,
+       9, 10, 11, 12,
+      13, 14, 15, 16,
+    });
+
+    REQUIRE(mat.rows == 4);
+    REQUIRE(mat.cols == 4);
+    mat.at(1, 1) = 6;
+    REQUIRE(mat.at(1, 1) == 6);
+    REQUIRE(mat.at(0, 2) == 3);
+  }
+
+  SECTION("not square") {
+    Matrix<int> mat(2, {
+      1, 2, 3,
+     20, 1, 1,
+    });
+
+    REQUIRE(mat.rows == 2);
+    REQUIRE(mat.cols == 3);
+    REQUIRE(mat.at(0, 1) == 2);
+  }
+}
+

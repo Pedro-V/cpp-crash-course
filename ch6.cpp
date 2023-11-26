@@ -240,7 +240,7 @@ void variadic_template_test() {
 }
 
 // -------------------------------------------------------------------------------- 
-// exercises
+// Exercises
 
 // 6-1 mode function
 int compare(const void *a, const void *b) {

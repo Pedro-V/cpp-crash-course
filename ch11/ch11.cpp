@@ -16,9 +16,6 @@
 // - Transferable: Can be moved;
 // - Exclusive: Cannot be copied;
 
-// ---------------------------------------------------------------------------------
-// Includes
-
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 #include <cstdio>

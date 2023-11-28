@@ -71,7 +71,7 @@ TEST_CASE("constructing a string with") {
 
 // Element and iterator access
 
-TEST_CASE("string's c_str method makes null-terminated char* ") {
+TEST_CASE("string's c_str method makes null-terminated char*") {
   // Many of std::vector methods are available to std::string.
   std::string word("horripilation");
   auto as_cstr = word.c_str();
@@ -94,7 +94,7 @@ TEST_CASE("std::string supports comparison with") {
     REQUIRE(word != "illusion"s);
     REQUIRE_FALSE(word == "illusion"s);
   }
-  SECTION("operator<") {
+  SECTION("operator< (lexicographic comparison)") {
     REQUIRE(word < "illusion");
     REQUIRE(word < "illusion"s);
     REQUIRE(word > "Illusion"s);
@@ -497,4 +497,4 @@ TEST_CASE("vowel_count") {
 }
 
 // TODO
-// Exercie 15-4
+// Exercise 15-4

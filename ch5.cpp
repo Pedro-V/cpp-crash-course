@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <stdexcept>
 
-// Polymorphism: the proporty of writing once and reusing with differente (poly)
+// Polymorphism: the property of writing once and reusing with differente (poly)
 // types, or forms.
 
 // implementation-inheritance uses base class inheritance feature.
